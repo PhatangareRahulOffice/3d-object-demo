@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Plotting Demo</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+    <script>
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+      // Co-ordinates are defined
+      const coordinates = [
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 1, z: 0 },
+        { x: 0, y: 0, z: 0 },
+
+        { x: 1, y: 0, z: 1 },
+        { x: 0, y: 0, z: 0 },
+        { x: 2, y: 0, z: 0 },
+
+        { x: 0, y: 1, z: 0 },
+        { x: 1, y: 1, z: 1 },
+        { x: 0, y: 1, z: 0 },
+
+        { x: 2, y: 1, z: 0 },
+        { x: 1, y: 1, z: 1 },
+        { x: 2, y: 1, z: 0 },
+
+        { x: 1, y: 0, z: 1 },
+        { x: 2, y: 0, z: 0 },
+        { x: 2, y: 0, z: 0 },
+
+        { x: 2, y: 1, z: 0 },
+        { x: 1, y: 0, z: 1 },
+        { x: 1, y: 1, z: 1 },
+      ];
+
+      // Calculation of center of all points to get an anchor for rotation
+      const center = coordinates.reduce(
+        (acc, curr) => {
+          acc.x += curr.x;
+          acc.y += curr.y;
+          acc.z += curr.z;
+          return acc;
+        },
+        { x: 0, y: 0, z: 0 }
+      );
+
+      // Normalization of the center for smooth rotation
+      center.x /= coordinates.length;
+      center.y /= coordinates.length;
+      center.z /= coordinates.length;
+
+      // Create sphere
+      const spheres = coordinates.map((coord) => {
+        const geometry = new THREE.SphereGeometry(0.1, 32, 32);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+
+        const sphere = new THREE.Mesh(geometry, material);
+        sphere.position.set(
+          coord.x - center.x,
+          coord.y - center.y,
+          coord.z - center.z
+        );
+        scene.add(sphere);
+        return sphere;
+      });
+
+      // Connect points with lines
+      const lineMaterial = new THREE.LineBasicMaterial({
+        color: 0x00ff00,
+        linewidth: 50,
+      });
+
+      for (let i = 0; i < coordinates.length - 1; i += 2) {
+        const lineGeometry = new THREE.Geometry();
+        lineGeometry.vertices.push(
+          new THREE.Vector3(
+            coordinates[i].x - center.x,
+            coordinates[i].y - center.y,
+            coordinates[i].z - center.z
+          ),
+          new THREE.Vector3(
+            coordinates[i + 1].x - center.x,
+            coordinates[i + 1].y - center.y,
+            coordinates[i + 1].z - center.z
+          )
+        );
+        const line = new THREE.Line(lineGeometry, lineMaterial);
+        scene.add(line);
+      }
+
+      camera.position.z =
+        Math.max(
+          Math.abs(coordinates[0].x - center.x),
+          Math.abs(coordinates[0].y - center.y),
+          Math.abs(coordinates[0].z - center.z)
+        ) * 5;
+
+      const mouse = new THREE.Vector2();
+      document.addEventListener("mousemove", (event) => {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      });
+
+      const animate = () => {
+        requestAnimationFrame(animate);
+
+        scene.rotation.y = mouse.x * Math.PI;
+        scene.rotation.x = mouse.y * Math.PI;
+
+        renderer.render(scene, camera);
+      };
+
+      animate();
+    </script>
+  </body>
+</html>
